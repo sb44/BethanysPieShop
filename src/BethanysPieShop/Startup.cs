@@ -236,7 +236,7 @@ namespace BethanysPieShop
             });
 
 
-            DbInitializer.Seed(app);
+           // DbInitializer.Seed(app);
 
         }
     }
