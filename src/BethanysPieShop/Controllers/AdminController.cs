@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using BethanysPieShop.Auth;
 using BethanysPieShop.ViewModels;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BethanysPieShop.Controllers
 {
-    [Authorize(Roles="Administrators")]
+    [Authorize(Roles = "Administrators")]
     public class AdminController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -76,7 +77,13 @@ namespace BethanysPieShop.Controllers
                 return RedirectToAction("UserManagement", _userManager.Users);
 
             var claims = await _userManager.GetClaimsAsync(user);
-            var vm = new EditUserViewModel() { Id = user.Id, Email = user.Email, UserName = user.UserName, UserClaims = claims.Select(c => c.Value).ToList() };
+            var vm = new EditUserViewModel()
+            {
+                Id = user.Id,
+                Email = user.Email,
+                UserName = user.UserName,
+                UserClaims = claims.Select(c => c.Value).ToList()
+            };
 
             return View(vm);
         }
@@ -183,6 +190,10 @@ namespace BethanysPieShop.Controllers
                     editRoleViewModel.Users.Add(user.UserName);
             }
 
+            //SB: Ajout Gestion des claims inclus dans ce role:
+            var claimsInRole = await _roleManager.GetClaimsAsync(role);
+            editRoleViewModel.RoleClaims = claimsInRole.Select(c => c.Value).ToList();
+
             return View(editRoleViewModel);
         }
 
@@ -226,6 +237,101 @@ namespace BethanysPieShop.Controllers
             return View("RoleManagement", _roleManager.Roles);
         }
 
+        // SB: Ajout Claims for role
+        public async Task<IActionResult> ManageClaimsForRole(string roleId)
+        {
+            IdentityRole role = await _roleManager.FindByIdAsync(roleId);
+            
+            if (role != null)
+            {
+                IList<Claim> roleClaimsInCurrentRole = await _roleManager.GetClaimsAsync(role);
+
+                var vm = new ClaimsByRoleManagementViewModel
+                {
+                    RoleId = role.Id,
+                    RoleName = role.Name,
+                    AllClaimsList = BethanysPieShopClaimTypes.ClaimsList,
+                    RoleClaims = roleClaimsInCurrentRole.Select(c => c.Value).ToList()
+                };
+
+                return View(vm);
+            }
+            else
+            {
+                return RedirectToAction("RoleManagement");
+            }
+         
+        }
+        //SB: Claims add to role
+        [HttpPost]
+        public async Task<IActionResult> AddClaimForRole(ClaimsByRoleManagementViewModel vm)
+        {
+            var role = await _roleManager.FindByIdAsync(vm.RoleId);
+
+            if (role == null)
+                return RedirectToAction("RoleManagement", _roleManager.Roles);
+
+            //SB: Vérifie si le role le possède déjà...
+            var claimsForRole = await _roleManager.GetClaimsAsync(role);
+            var lastAccessedClaim = claimsForRole.FirstOrDefault(t => t.Type == vm.ClaimId);
+            if (lastAccessedClaim == null)
+            {
+
+                var roleClaim = new Claim(vm.ClaimId, vm.ClaimId);
+                var result = await _roleManager.AddClaimAsync(role, roleClaim); //role.Claims.Add(claim);
+
+                if (result.Succeeded)
+                    return RedirectToAction("RoleManagement");
+                else
+                    ModelState.AddModelError("", "Something went wrong while adding the claim for this role");
+            }
+            else
+            {
+                ModelState.AddModelError("", "Role already has this claim, no update was executed.");
+            }
+
+            //Erreur:
+            vm.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
+            vm.RoleClaims = claimsForRole.Select(c => c.Value).ToList();
+            return View("ManageClaimsForRole", vm);
+        }
+
+        //SB: Claims remove from role
+        [HttpPost]
+        public async Task<IActionResult> RemoveRoleClaimFromRole(ClaimsByRoleManagementViewModel vm)
+        {
+            var role = await _roleManager.FindByIdAsync(vm.RoleId);
+            IList<Claim> claimsForRole;
+            if (role != null)
+            {
+                claimsForRole = await _roleManager.GetClaimsAsync(role);
+                var lastAccessedClaim = claimsForRole.FirstOrDefault(t => t.Type == vm.ClaimId);
+                if (lastAccessedClaim != null)
+                {
+                    IdentityResult resDelete = await _roleManager.RemoveClaimAsync(role, lastAccessedClaim);
+
+                    if (resDelete.Succeeded)
+                        return RedirectToAction("RoleManagement");
+                    else
+                        ModelState.AddModelError("", "Something went wrong while deleting the claim for this role");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "The current claim for this role does not exist. No need to remove it!");
+                }
+            }
+            else
+            {
+                return RedirectToAction("RoleManagement");
+            }
+
+            //Erreur
+            vm.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
+            vm.RoleClaims = claimsForRole.Select(c => c.Value).ToList();
+            return View("ManageClaimsForRole", vm);
+        }
+
+
         //Users in roles
 
         public async Task<IActionResult> AddUserToRole(string roleId)
@@ -258,7 +364,7 @@ namespace BethanysPieShop.Controllers
 
             if (result.Succeeded)
             {
-                return RedirectToAction("RoleManagement", _roleManager.Roles);
+                return RedirectToAction("RoleManagement");
             }
 
             foreach (IdentityError error in result.Errors)
@@ -274,7 +380,7 @@ namespace BethanysPieShop.Controllers
             var role = await _roleManager.FindByIdAsync(roleId);
 
             if (role == null)
-                return RedirectToAction("RoleManagement", _roleManager.Roles);
+                return RedirectToAction("RoleManagement");
 
             var addUserToRoleViewModel = new UserRoleViewModel { RoleId = role.Id };
 
@@ -310,7 +416,7 @@ namespace BethanysPieShop.Controllers
             return View(userRoleViewModel);
         }
 
-        //Claims
+        //Claims for user
         public async Task<IActionResult> ManageClaimsForUser(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);
@@ -318,31 +424,93 @@ namespace BethanysPieShop.Controllers
             if (user == null)
                 return RedirectToAction("UserManagement", _userManager.Users);
 
-            var claimsManagementViewModel = new ClaimsManagementViewModel { UserId = user.Id, AllClaimsList = BethanysPieShopClaimTypes.ClaimsList };
+            var claims = await _userManager.GetClaimsAsync(user);
+
+            var claimsManagementViewModel = new ClaimsManagementViewModel
+            {
+                UserId = user.Id,
+                UserName = user.UserName,
+                AllClaimsList = BethanysPieShopClaimTypes.ClaimsList,
+                UserClaims  = claims.Select(c => c.Value).ToList() //ajout sb
+            };
 
             return View(claimsManagementViewModel);
         }
 
+        //Claims add to user
         [HttpPost]
-        public async Task<IActionResult> ManageClaimsForUser(ClaimsManagementViewModel claimsManagementViewModel)
+        public async Task<IActionResult> AddClaimForUser(ClaimsManagementViewModel claimsManagementViewModel)
         {
             var user = await _userManager.FindByIdAsync(claimsManagementViewModel.UserId);
 
             if (user == null)
                 return RedirectToAction("UserManagement", _userManager.Users);
 
-            IdentityUserClaim<string> claim =
-                new IdentityUserClaim<string> { ClaimType = claimsManagementViewModel.ClaimId, ClaimValue = claimsManagementViewModel.ClaimId };
+            //SB: Vérifie si le user le possède déjà...
+            var claimsForUser = await _userManager.GetClaimsAsync(user);
+            var lastAccessedClaim = claimsForUser.FirstOrDefault(t => t.Type == claimsManagementViewModel.ClaimId);
+            if (lastAccessedClaim == null)
+            { 
 
-            user.Claims.Add(claim);
-            var result = await _userManager.UpdateAsync(user);
+                IdentityUserClaim<string> claim = new IdentityUserClaim<string>
+                {
+                    ClaimType = claimsManagementViewModel.ClaimId,
+                    ClaimValue = claimsManagementViewModel.ClaimId
+                };
 
-            if (result.Succeeded)
-                return RedirectToAction("UserManagement", _userManager.Users);
+                user.Claims.Add(claim);
+                var result = await _userManager.UpdateAsync(user);
 
-            ModelState.AddModelError("", "User not updated, something went wrong.");
+                if (result.Succeeded)
+                    return RedirectToAction("UserManagement", _userManager.Users);
+                else
+                    ModelState.AddModelError("", "Something went wrong while adding the claim for this user");
 
-            return View(claimsManagementViewModel);
+            } else
+            {
+                ModelState.AddModelError("", "User already has this claim, no update was executed.");
+            }
+
+            // Erreur
+            claimsManagementViewModel.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
+            claimsManagementViewModel.UserClaims = claimsForUser.Select(c => c.Value).ToList();
+            return View("ManageClaimsForUser", claimsManagementViewModel);
         }
+
+        //Claims remove from user
+        [HttpPost]
+        public async Task<IActionResult> RemoveUserClaimFromUser(ClaimsManagementViewModel claimsManagementViewModel)
+        {
+            var user = await _userManager.FindByIdAsync(claimsManagementViewModel.UserId);
+            IList<Claim> claimsForUser;
+            if (user != null)
+            {
+                claimsForUser = await _userManager.GetClaimsAsync(user);
+                Claim lastAccessedClaim = claimsForUser.FirstOrDefault(t => t.Type == claimsManagementViewModel.ClaimId);
+                if (lastAccessedClaim != null)
+                {
+                    IdentityResult resDelete =  await _userManager.RemoveClaimAsync(user, lastAccessedClaim);
+
+                    if (resDelete.Succeeded)
+                        return RedirectToAction("UserManagement");
+                    else
+                        ModelState.AddModelError("", "Something went wrong while deleting the claim for this user");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "The current claim for this user does not exist. No need to remove it from him!");
+                }
+            }
+            else
+            {
+                return RedirectToAction("UserManagement");
+            }
+
+            // Erreur
+            claimsManagementViewModel.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
+            claimsManagementViewModel.UserClaims = claimsForUser.Select(c => c.Value).ToList();
+            return View("ManageClaimsForUser", claimsManagementViewModel);
+        }
+
     }
 }

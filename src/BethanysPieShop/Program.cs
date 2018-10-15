@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BethanysPieShop.Models;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -23,8 +24,11 @@ namespace BethanysPieShop
                 var services = scope.ServiceProvider;
                 try
                 {
+                    var Configuration = host.Services.GetRequiredService<IConfiguration>();
                     var context = services.GetRequiredService<AppDbContext>();
-                    DbInitializer.Seed(context);
+                    
+                    DbInitializer.Seed(context, services, Configuration);
+
                 }
                 catch (Exception ex)
                 {

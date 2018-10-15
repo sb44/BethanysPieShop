@@ -118,22 +118,22 @@ namespace BethanysPieShop
             services.Configure<GzipCompressionProviderOptions>(options => options.Level = System.IO.Compression.CompressionLevel.Optimal);
 
 
-            //services.Configure<RequestLocalizationOptions>(
-            //    options =>
-            //    {
-            //        var supportedCultures = new List<CultureInfo>
-            //        {
-            //            new CultureInfo("fr"),
-            //            new CultureInfo("fr-FR"),
-            //            new CultureInfo("nl"),
-            //            new CultureInfo("nl-BE"),
-            //            new CultureInfo("en-US")
-            //        };
+            services.Configure<RequestLocalizationOptions>(
+                options =>
+                {
+                    var supportedCultures = new List<CultureInfo>
+                    {
+                        new CultureInfo("fr"),
+                        new CultureInfo("fr-FR"),
+                        new CultureInfo("nl"),
+                        new CultureInfo("nl-BE"),
+                        new CultureInfo("en-US")
+                    };
 
-            //        options.DefaultRequestCulture = new RequestCulture("en-US");
-            //        options.SupportedCultures = supportedCultures;
-            //        options.SupportedUICultures = supportedCultures;
-            //    });
+                    options.DefaultRequestCulture = new RequestCulture("en-US");
+                    options.SupportedCultures = supportedCultures;
+                    options.SupportedUICultures = supportedCultures;
+                });
 
             services.AddAuthentication()
                 .AddGoogle(options =>
@@ -145,7 +145,7 @@ namespace BethanysPieShop
             //Claims-based
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("AdministratorOnly", policy => policy.RequireRole("Administrator"));
+                options.AddPolicy("AdministratorOnly", policy => policy.RequireRole("Administrators"));
                 options.AddPolicy("DeletePie", policy => policy.RequireClaim("Delete Pie", "Delete Pie"));
                 options.AddPolicy("AddPie", policy => policy.RequireClaim("Add Pie", "Add Pie"));
                 options.AddPolicy("MinimumOrderAge", policy => policy.Requirements.Add(new MinimumOrderAgeRequirement(18)));

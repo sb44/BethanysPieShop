@@ -1,0 +1,50 @@
+﻿@model ClaimsByRoleManagementViewModel
+<h2>Claims management for role : @Model.RoleName</h2>
+<hr>
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+<h4>Add claims for role</h4>
+<form asp-controller="Admin" asp-action="AddClaimForRole">
+    <input type="hidden" name="RoleId" value="@Model.RoleId" />
+    <input type="hidden" name="RoleName" value="@Model.RoleName" />
+    <select asp-for="ClaimId"
+            asp-items="@(new SelectList(Model.AllClaimsList))">
+        <option>Please select a claim</option>
+    </select>
+    <input class="btn btn-primary" value="Add claim for role" type="submit" />
+</form>
+
+
+<br />
+
+
+<h4>Current claims for role</h4>
+
+<table class="table table-condensed table-bordered">
+    <tr>
+        <th>Claim Type</th>
+        <th></th>
+        <th></th>
+    </tr>
+    @foreach (var claim in Model.RoleClaims)
+    {
+        <tr>
+            <td>@claim</td>
+            <td></td>
+            <td>
+                <form asp-action="RemoveRoleClaimFromRole" method="post">
+                    <input type="hidden" name="RoleId" value="@Model.RoleId" />
+                    <input type="hidden" name="RoleName" value="@Model.RoleName" />
+                    <input type="hidden" name="claimId" value="@claim" />
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Do you really want to remove this claim for this role?');">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>
+
+<br />
+
+<a asp-action="RoleManagement" class="btn btn-primary">Done</a>

@@ -13,5 +13,7 @@ namespace BethanysPieShop.ViewModels
 
         public List<string> Users { get; set; }
 
+        public List<string> RoleClaims { get; set; } //SB: Ajout
+
     }
 }

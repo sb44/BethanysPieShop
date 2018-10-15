@@ -1,14 +1,53 @@
 ﻿@model ClaimsManagementViewModel
 
-<h2>Manage claims for user</h2>
+<h2>Claims management for user : @Model.UserName</h2>
+<hr>
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-<form asp-controller="Admin" asp-action="ManageClaimsForUser">
+<h4>Add claims for user</h4>
+
+<form asp-controller="Admin" asp-action="AddClaimForUser">
     <input type="hidden" name="userId" value="@Model.UserId" />
+    <input type="hidden" name="userName" value="@Model.UserName" />
+
     <select asp-for="ClaimId"
             asp-items="@(new SelectList(Model.AllClaimsList))">
         <option>Please select a claim</option>
     </select>
     <input class="btn btn-primary" value="Add claim for user" type="submit" />
 </form>
+
+
+<br />
+
+
+<h4>Current claims for user</h4>
+
+<table class="table table-condensed table-bordered">
+    <tr>
+        <th>Claim Type</th>
+        <th></th>
+        <th></th>
+    </tr>
+    @foreach (var claim in Model.UserClaims)
+    {
+        <tr>
+            <td>@claim</td>
+            <td></td>
+            <td>
+                <form asp-action="RemoveUserClaimFromUser" method="post">
+                    <input type="hidden" name="userId" value="@Model.UserId" />
+                    <input type="hidden" name="userName" value="@Model.UserName" />
+                    <input type="hidden" name="claimId" value="@claim" />
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Do you really want to remove this claim for this user?');">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+    }
+</table>
+
+<br />
 
 <a asp-action="UserManagement" class="btn btn-primary">Done</a>

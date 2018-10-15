@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace BethanysPieShop.Controllers
 {
-    [Authorize(Roles = "Administrators")]
-    [Authorize(Policy = "DeletePie")]
+    [Authorize(Roles = "Administrators")]  //SB: ALL POLICIES MUST BE MET IN ORDER TO HAVE ACCESS
+    [Authorize(Policy = "DeletePie")]      //SB : Ici, l'utilisateur doit remplir les 2 conditions, soit avoir role "Administrators" et le claim DeletePie
     public class PieManagementController: Controller
     {
         private readonly IPieRepository _pieRepository;

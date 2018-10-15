@@ -43,3 +43,17 @@
 
 <a asp-action="AddUserToRole" asp-route-roleId="@Model.Id" class="btn btn-primary">Add users to role</a>
 <a asp-action="DeleteUserFromRole" asp-route-roleId="@Model.Id" class="btn btn-primary">Remove users from role</a>
+
+
+@* SB: Gestion des claims dans ce role *@
+<h3>Claims in this role</h3>
+<ul>
+    @foreach (var claim in Model.RoleClaims)
+    {
+        <li>
+            @claim
+        </li>
+    }
+</ul>
+<a asp-action="ManageClaimsForRole" asp-route-roleId="@Model.Id" class="btn btn-primary">Manage claims for this role</a>
+@* Fin ajout SB *@

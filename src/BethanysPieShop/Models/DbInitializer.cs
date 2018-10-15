@@ -1,17 +1,23 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using BethanysPieShop.Auth;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BethanysPieShop.Models
 {
     public static class DbInitializer
     {
-        public static void Seed(AppDbContext context) //public static void Seed(IApplicationBuilder applicationBuilder)
+        public static void Seed(AppDbContext context, IServiceProvider serviceProvider, IConfiguration Configuration) //public static void Seed(IApplicationBuilder applicationBuilder)
         {
             //AppDbContext context = applicationBuilder.ApplicationServices.GetRequiredService<AppDbContext>();
+
+            CreateRolesAdminUsers(Configuration, serviceProvider).Wait();
 
             if (!context.Categories.Any())
             {
@@ -64,5 +70,124 @@ namespace BethanysPieShop.Models
                 return categories;
             }
         }
+
+
+        private static async Task CreateRolesAdminUsers(IConfiguration Configuration ,IServiceProvider serviceProvider)
+        {
+            //initializing custom roles 
+            var RoleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            string[] roleNames = { "Administrators", "Managers", "Members" };
+            IdentityResult roleResult;
+
+            foreach (var roleName in roleNames)
+            {
+                var roleExist = await RoleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    var identityRole = new IdentityRole(roleName);
+                    //create the roles and seed them to the database
+                    roleResult = await RoleManager.CreateAsync(identityRole);
+
+                    //SB: Assignation des claims(droits) aux différents roles:
+                    await AssignClaimsToRole(identityRole, RoleManager);
+                }
+            }
+
+            //Creer Admin
+            var powerUser = new ApplicationUser
+            {
+                UserName = Configuration["AppSettings:AdminUserEmail"], // Pour créer membre (avec CreateAsync), on doit mettre le email comme userName par convention
+                Email = Configuration["AppSettings:AdminUserEmail"],
+                EmailConfirmed = true, // on fait EmailConfirmed pour permettre le login immédiatement
+                
+                //propriétés supplémentaires ajoutés:
+                //Nom = Configuration["AppSettings:AdminLastName"],
+                //Prenom = Configuration["AppSettings:AdminFirstName"],
+                //Civilite = new Civilite { Abbreviation = CiviliteAbbreviation.M.ToString(), Name = CiviliteName.Monsieur.ToString() }.Abbreviation,
+                //Langue = new Language { Abbreviation = LanguageAbbreviation.fr.ToString(), Name = LanguageName.FR.ToString() }.Abbreviation,
+                //DateInscription = DateTime.Now,
+                //Adresse = "1204 rue Benoit, Chambly, QC J3L 5K8"
+            };
+            //Ensure you have these values in your appsettings.json file
+            string userPWD = Configuration["AppSettings:AdminUserPassword"];
+            var _user = await UserManager.FindByEmailAsync(Configuration["AppSettings:AdminUserEmail"]); //recherche par email
+            if (_user == null)
+                _user = await UserManager.FindByNameAsync(Configuration["AppSettings:AdminUserEmail"]); //recherche par nom d'utilisateur
+
+            if (_user == null)
+            {
+                var createPowerUser = await UserManager.CreateAsync(powerUser, userPWD);
+                if (createPowerUser.Succeeded)
+                {
+                    //here we tie the new user to the role
+                    await UserManager.AddToRoleAsync(powerUser, "Administrators");
+                }
+            }
+
+            ////Créer un membre...VENDEUR par défaut!
+            //var user = new Vendeur
+            //{
+            //    UserName = "isabelle.blais16@gmail.com", // Pour créer membre (avec CreateAsync), on doit mettre le email comme userName par convention
+            //    Email = "isabelle.blais16@gmail.com",
+            //    EmailConfirmed = true, // on fait EmailConfirmed pour permettre le login immédiatement
+            //    //propriétés supplémentaires ajoutés:
+            //    Nom = "Blain",
+            //    Prenom = "Isabelle",
+            //    Civilite = new Civilite { Abbreviation = CiviliteAbbreviation.Mme.ToString(), Name = CiviliteName.Madame.ToString() }.Abbreviation,
+            //    Langue = new Language { Abbreviation = LanguageAbbreviation.fr.ToString(), Name = LanguageName.FR.ToString() }.Abbreviation,
+            //    DateInscription = DateTime.Now,
+            //    Adresse = "1204 rue Benoit, Chambly, QC J3L 5K8"
+            //};
+            ////Ensure you have these values in your appsettings.json file
+            //string userPWDn = Configuration["AppSettings:AdminUserPassword"]; //meme pw que l'Admin
+            //var _userN = await UserManager.FindByEmailAsync("isabelle.blais16@gmail.com"); //recherche par email
+            //if (_userN == null)
+            //    _userN = await UserManager.FindByNameAsync("isabelle.blais16@gmail.com"); //recherche par nom d'utilisateur
+
+            //if (_userN == null)
+            //{
+            //    var createNormalUser = await UserManager.CreateAsync(user, userPWDn);
+            //    if (createNormalUser.Succeeded)
+            //    {
+            //        //here we tie the new user to the role
+            //        await UserManager.AddToRoleAsync(user, "Member");
+            //    }
+            //}
+
+            //Créer un 2e membre:
+            // etc.
+        }
+
+
+        private static async Task AssignClaimsToRole(IdentityRole identityRole, RoleManager<IdentityRole> roleManager)
+        {
+            string claimType = BethanysPieShopClaimTypes.ClaimsList.First(s => s == "Delete Pie");
+            var claimDeletePie = new Claim(claimType, claimType);
+
+            claimType = BethanysPieShopClaimTypes.ClaimsList.First(s => s == "Add Pie");
+            var claimAddPie = new Claim(claimType, claimType);
+
+            string role = identityRole.Name;
+            switch (role)
+            {
+                case "Administrators":
+                    await roleManager.AddClaimAsync(identityRole, claimDeletePie);
+                    await roleManager.AddClaimAsync(identityRole, claimAddPie);
+                    break;
+                case "Managers":
+
+                    break;
+                case "Members":
+
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // FIN AJOUT SB
     }
+
+
 }

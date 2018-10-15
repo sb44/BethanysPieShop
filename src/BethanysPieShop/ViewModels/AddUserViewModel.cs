@@ -16,7 +16,7 @@ namespace BethanysPieShop.ViewModels
         public string Email { get; set; }
 
         [Required]
-        [DataType(DataType.Password)]
+        [DataType(DataType.Password)] // valide selon ce qui est défini dans startup.cs
         public string Password { get; set; }
 
         [Required(ErrorMessage = "Please enter the birth date")]
