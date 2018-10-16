@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace BethanysPieShop.ViewModels
 {
@@ -13,7 +14,7 @@ namespace BethanysPieShop.ViewModels
 
         public List<string> Users { get; set; }
 
-        public List<string> RoleClaims { get; set; } //SB: Ajout
-
+        public IList<Claim> RoleClaims { get; set; }// public List<string> RoleClaims { get; set; } //SB: Ajout
+        
     }
 }

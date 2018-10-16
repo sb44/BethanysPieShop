@@ -82,7 +82,10 @@ namespace BethanysPieShop.Controllers
                 Id = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
-                UserClaims = claims.Select(c => c.Value).ToList()
+                Birthdate = user.Birthdate,
+                City = user.City,
+                Country = user.Country,
+                UserClaims = claims //claims.Select(c => c.Value).ToList()
             };
 
             return View(vm);
@@ -100,6 +103,13 @@ namespace BethanysPieShop.Controllers
                 user.Birthdate = editUserViewModel.Birthdate;
                 user.City = editUserViewModel.City;
                 user.Country = editUserViewModel.Country;
+
+                //SB ajout claim pour dateofBirth
+                user.Claims.Add(new IdentityUserClaim<string>
+                {
+                    ClaimType = ClaimTypes.DateOfBirth,
+                    ClaimValue = user.Birthdate.ToString()
+                });
 
                 var result = await _userManager.UpdateAsync(user);
 
@@ -192,7 +202,7 @@ namespace BethanysPieShop.Controllers
 
             //SB: Ajout Gestion des claims inclus dans ce role:
             var claimsInRole = await _roleManager.GetClaimsAsync(role);
-            editRoleViewModel.RoleClaims = claimsInRole.Select(c => c.Value).ToList();
+            editRoleViewModel.RoleClaims = claimsInRole; //claimsInRole.Select(c => c.Value).ToList();
 
             return View(editRoleViewModel);
         }
@@ -251,7 +261,7 @@ namespace BethanysPieShop.Controllers
                     RoleId = role.Id,
                     RoleName = role.Name,
                     AllClaimsList = BethanysPieShopClaimTypes.ClaimsList,
-                    RoleClaims = roleClaimsInCurrentRole.Select(c => c.Value).ToList()
+                    RoleClaims = roleClaimsInCurrentRole //roleClaimsInCurrentRole.Select(c => c.Value).ToList()
                 };
 
                 return View(vm);
@@ -292,7 +302,7 @@ namespace BethanysPieShop.Controllers
 
             //Erreur:
             vm.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
-            vm.RoleClaims = claimsForRole.Select(c => c.Value).ToList();
+            vm.RoleClaims = claimsForRole; //claimsForRole.Select(c => c.Value).ToList();
             return View("ManageClaimsForRole", vm);
         }
 
@@ -327,7 +337,7 @@ namespace BethanysPieShop.Controllers
 
             //Erreur
             vm.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
-            vm.RoleClaims = claimsForRole.Select(c => c.Value).ToList();
+            vm.RoleClaims = claimsForRole; //claimsForRole.Select(c => c.Value).ToList();
             return View("ManageClaimsForRole", vm);
         }
 
@@ -431,7 +441,7 @@ namespace BethanysPieShop.Controllers
                 UserId = user.Id,
                 UserName = user.UserName,
                 AllClaimsList = BethanysPieShopClaimTypes.ClaimsList,
-                UserClaims  = claims.Select(c => c.Value).ToList() //ajout sb
+                UserClaims  = claims //claims.Select(c => c.Value).ToList() //ajout sb
             };
 
             return View(claimsManagementViewModel);
@@ -473,7 +483,7 @@ namespace BethanysPieShop.Controllers
 
             // Erreur
             claimsManagementViewModel.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
-            claimsManagementViewModel.UserClaims = claimsForUser.Select(c => c.Value).ToList();
+            claimsManagementViewModel.UserClaims = claimsForUser; //claimsForUser.Select(c => c.Value).ToList();
             return View("ManageClaimsForUser", claimsManagementViewModel);
         }
 
@@ -508,7 +518,7 @@ namespace BethanysPieShop.Controllers
 
             // Erreur
             claimsManagementViewModel.AllClaimsList = BethanysPieShopClaimTypes.ClaimsList;
-            claimsManagementViewModel.UserClaims = claimsForUser.Select(c => c.Value).ToList();
+            claimsManagementViewModel.UserClaims = claimsForUser; //claimsForUser.Select(c => c.Value).ToList();
             return View("ManageClaimsForUser", claimsManagementViewModel);
         }
 

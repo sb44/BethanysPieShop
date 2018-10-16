@@ -26,19 +26,20 @@
 <table class="table table-condensed table-bordered">
     <tr>
         <th>Claim Type</th>
-        <th></th>
+        <th>Claim Value</th>
         <th></th>
     </tr>
     @foreach (var claim in Model.UserClaims)
     {
         <tr>
-            <td>@claim</td>
+            <td>@claim.Type</td>
+            <td>@claim.Value</td>
             <td></td>
             <td>
                 <form asp-action="RemoveUserClaimFromUser" method="post">
                     <input type="hidden" name="userId" value="@Model.UserId" />
                     <input type="hidden" name="userName" value="@Model.UserName" />
-                    <input type="hidden" name="claimId" value="@claim" />
+                    <input type="hidden" name="claimId" value="@claim.Type" />
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Do you really want to remove this claim for this user?');">
                         Delete
                     </button>

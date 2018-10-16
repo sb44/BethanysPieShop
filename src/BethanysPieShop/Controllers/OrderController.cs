@@ -40,9 +40,15 @@ namespace BethanysPieShop.Controllers
 
             if (ModelState.IsValid)
             {
+                // SB: PayPal ici:
+                //Si succès
+
                 _orderRepository.CreateOrder(order);
                 _shoppingCart.ClearCart();
+
                 return RedirectToAction("CheckoutComplete");
+                //Fin succès
+                //Sinon rediriger vers Échec.
             }
             return View(order);
 

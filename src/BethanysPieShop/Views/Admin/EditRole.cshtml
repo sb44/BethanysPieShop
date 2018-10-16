@@ -48,10 +48,13 @@
 @* SB: Gestion des claims dans ce role *@
 <h3>Claims in this role</h3>
 <ul>
+    <li>
+        <span>Claim Type</span>
+    </li>
     @foreach (var claim in Model.RoleClaims)
     {
         <li>
-            @claim
+            <span>@claim.Type</span>
         </li>
     }
 </ul>

@@ -65,10 +65,13 @@
 
 <h3>Claims for this user</h3>
 <ul>
+    <li>
+        <span>Claim Type</span>
+    </li>
     @foreach (var claim in Model.UserClaims)
     {
         <li>
-            @claim
+            <span>@claim.Type</span>
         </li>
     }
 </ul>

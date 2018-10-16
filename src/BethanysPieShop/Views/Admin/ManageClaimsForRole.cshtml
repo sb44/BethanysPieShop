@@ -23,25 +23,25 @@
 <table class="table table-condensed table-bordered">
     <tr>
         <th>Claim Type</th>
-        <th></th>
+        <th>Claim Value</th>
         <th></th>
     </tr>
     @foreach (var claim in Model.RoleClaims)
     {
-        <tr>
-            <td>@claim</td>
-            <td></td>
-            <td>
-                <form asp-action="RemoveRoleClaimFromRole" method="post">
-                    <input type="hidden" name="RoleId" value="@Model.RoleId" />
-                    <input type="hidden" name="RoleName" value="@Model.RoleName" />
-                    <input type="hidden" name="claimId" value="@claim" />
-                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Do you really want to remove this claim for this role?');">
-                        Delete
-                    </button>
-                </form>
-            </td>
-        </tr>
+    <tr>
+        <td>@claim.Type</td>
+        <td>@claim.Value</td>
+        <td>
+            <form asp-action="RemoveRoleClaimFromRole" method="post">
+                <input type="hidden" name="RoleId" value="@Model.RoleId" />
+                <input type="hidden" name="RoleName" value="@Model.RoleName" />
+                <input type="hidden" name="claimId" value="@claim" />
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Do you really want to remove this claim for this role?');">
+                    Delete
+                </button>
+            </form>
+        </td>
+    </tr>
     }
 </table>
 
