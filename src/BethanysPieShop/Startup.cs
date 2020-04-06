@@ -169,7 +169,7 @@ namespace BethanysPieShop
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseStatusCodePages();
+                app.UseStatusCodePages(); // Pour custom:  https://stackoverflow.com/questions/38492160/redirect-to-custom-access-denied-page-for-asp-net-core
             }
             else
             {

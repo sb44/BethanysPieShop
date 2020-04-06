@@ -55,7 +55,7 @@ namespace BethanysPieShop.Controllers
             return View(loginViewModel);
         }
 
-
+        [AllowAnonymous]
         public IActionResult Register()
         {
             return View();
@@ -63,11 +63,12 @@ namespace BethanysPieShop.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(LoginViewModel loginViewModel)
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser() { UserName = loginViewModel.UserName };
+                var user = new ApplicationUser() { UserName = loginViewModel.UserName, Email = loginViewModel.UserName };
                 var result = await _userManager.CreateAsync(user, loginViewModel.Password);
 
                 if (result.Succeeded)
